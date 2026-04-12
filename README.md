@@ -22,6 +22,7 @@ Scrolling X is a time sink. This extension turns your timeline into a podcast �
 - **Speed control** — 0.5x to 2.0x playback speed
 - **Toggle options** — choose whether to read quoted retweets and long-form tweets
 - **Auto "Show more"** — clicks expand buttons so it reads full tweet threads
+- **Server control** — Start/Stop the TTS server from the popup, no terminal needed
 - **Resource-friendly** — auto-unloads models after 5 min idle, server shuts down after 10 min
 - **Download manager** — see cached models, their disk usage, and delete to free space
 
@@ -79,8 +80,8 @@ This lets you start and stop the TTS server directly from the extension popup �
 │  TTS Server (Flask)             │
 │                                 │
 │  ├─ Edge TTS     (cloud, fast)  │
-│  ├─ Qwen3 TTS   (local, MPS)   │
 │  ├─ Pocket TTS  (local, CPU)   │
+│  ├─ Qwen3 TTS   (local, MPS)   │
 │  ├─ VoxCPM2     (local, MPS)   │
 │  ├─ HuggingFace (any model)    │
 │  └─ Browser TTS (fallback)     │
