@@ -38,27 +38,30 @@ source venv/bin/activate
 pip install -r server/requirements.txt
 ```
 
-### 2. Start the TTS server
-
-```bash
-./server/start_server.sh
-```
-
-The server runs on `http://localhost:8787` and auto-shuts down after 10 minutes of inactivity.
-
-### 3. Load the Chrome extension
+### 2. Load the Chrome extension
 
 1. Open `chrome://extensions`
 2. Enable **Developer mode** (top right)
 3. Click **Load unpacked**
 4. Select the **`extension/`** folder (not the project root)
 
+### 3. Enable Start/Stop button (one-time)
+
+```bash
+./server/setup_native_host.sh
+```
+
+This lets you start and stop the TTS server directly from the extension popup — no terminal needed. Works on macOS and Linux.
+
 ### 4. Use it
 
 1. Go to [x.com](https://x.com/home)
 2. Click the extension icon
-3. (Optional) Enter topic filters
-4. Hit **Play**
+3. Click **Start** to launch the server
+4. (Optional) Enter topic filters
+5. Hit **Play**
+
+> **Manual start:** If you skip step 3, you can always start the server from Terminal with `./server/start_server.sh`
 
 ## Architecture
 
@@ -140,15 +143,15 @@ launchctl load ~/Library/LaunchAgents/com.xreader.tts.plist
 
 The server starts on login, auto-shuts down after 10 min idle, and only restarts on crash.
 
-### Auto-start from Chrome (Native Messaging)
+### Didn't run setup_native_host.sh?
 
-Let the extension auto-launch the server when you open X:
+If you skipped step 3 in Quick Start, you can still start the server manually:
 
 ```bash
-./server/setup_native_host.sh
+./server/start_server.sh
 ```
 
-Prompts for your Chrome extension ID (from `chrome://extensions`).
+The server auto-shuts down after 10 minutes of inactivity.
 
 ### Install local TTS engines
 
@@ -227,6 +230,17 @@ The TTS server exposes these endpoints:
 | `/download-progress` | GET | Poll download progress |
 | `/cached-models` | GET | List downloaded models with sizes |
 | `/cached-models/:id` | DELETE | Delete a cached model |
+| `/shutdown` | POST | Gracefully shut down the server |
+
+## Acknowledgments
+
+This project is built on top of amazing open-source work:
+
+- [Edge TTS](https://github.com/rany2/edge-tts) — Microsoft neural TTS voices via Python
+- [Pocket TTS](https://github.com/kyutai-labs/pocket-tts) — Lightweight CPU-only TTS by Kyutai Labs
+- [Qwen3 TTS](https://github.com/QwenLM/Qwen3-TTS) — Open-source TTS by Alibaba Qwen team
+- [VoxCPM](https://github.com/OpenBMB/VoxCPM) — Realistic voice synthesis by OpenBMB
+- [HuggingFace Transformers](https://github.com/huggingface/transformers) — Model hub and inference pipeline
 
 ## Contributing
 

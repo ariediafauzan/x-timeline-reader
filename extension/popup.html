@@ -298,6 +298,36 @@
     .cache-delete:hover { background: #67070f; color: #fff; }
     .cache-delete:disabled { opacity: 0.3; cursor: default; }
 
+    /* Server bar */
+    .server-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      background: #1e2e3d; border-radius: 8px;
+      padding: 8px 12px; margin-bottom: 12px;
+    }
+    .server-status {
+      display: flex; align-items: center; gap: 8px;
+    }
+    .server-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #526471; flex-shrink: 0;
+    }
+    .server-dot.online { background: #1a8a4a; box-shadow: 0 0 6px #1a8a4a; }
+    .server-dot.offline { background: #67070f; }
+    .server-label { font-size: 11px; color: #8b98a5; }
+    .server-btn {
+      flex: none; font-size: 10px; font-weight: 600;
+      padding: 4px 14px; border-radius: 14px;
+      border: 1px solid #38444d; background: none;
+      color: #e7e9ea; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .server-btn:hover:not(:disabled) { border-color: #8b98a5; }
+    .server-btn:disabled { opacity: 0.4; cursor: default; }
+    .server-btn.start { border-color: #1a8a4a; color: #1a8a4a; }
+    .server-btn.start:hover { background: #1a8a4a; color: #fff; }
+    .server-btn.stop { border-color: #67070f; color: #e05555; }
+    .server-btn.stop:hover { background: #67070f; color: #fff; }
+
     .not-on-x {
       text-align: center; padding: 20px 10px;
       color: #8b98a5; font-size: 13px; line-height: 1.5;
@@ -311,6 +341,14 @@
       <span class="logo">X</span> Timeline Reader
       <span class="engine-badge" id="engineBadge">--</span>
     </h1>
+
+    <div class="server-bar" id="serverBar">
+      <div class="server-status">
+        <span class="server-dot" id="serverDot"></span>
+        <span class="server-label" id="serverLabel">Checking...</span>
+      </div>
+      <button class="server-btn" id="serverBtn" disabled>--</button>
+    </div>
 
     <div class="server-hint" id="serverHint" style="display:none;">
       For natural voice, run: <code>source venv/bin/activate && python tts_server.py</code>

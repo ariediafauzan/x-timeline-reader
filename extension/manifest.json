@@ -3,6 +3,7 @@
   "name": "X Timeline Reader",
   "version": "1.0",
   "description": "Reads your X timeline aloud so you can listen while working",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAmuZEHaYrvVtXx3gQwGiD6v1pD8qQ3vEEJXnphHieoNWi/tKmlzD3Ex++/Vrqj2iUpFaZgHDguQgOT4+xypYIiCzR3/Ra50LaxTnwyLg4ObLhGZvOCM68/OnZIEWwzjxegSpahttcdWrwqXt+pCGmVkVh44MBX9KJ0BpqmL6xR7H/ncsPYGRt7hH9VzrQVtNRTp0iEVI7t9z2H8cF9iS+AoZAwhW7m4dO33rGsIST476TLGRf5osN1MoAXiQ7lgMVAqsyDyM/ntcbKC7Z59iMq4/pLj4qqZIhLxUpwUbBe6TYZStausDBSXbAHeUloONgAQ0JTrw2laJvyO5HpPy6FQIDAQAB",
   "permissions": ["activeTab", "storage", "nativeMessaging"],
   "icons": {
     "48": "icons/icon48.png",

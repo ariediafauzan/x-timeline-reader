@@ -123,6 +123,28 @@
     return text.length > MAX_TWEET_LENGTH;
   }
 
+  function expandShowMore(article) {
+    // Click "Show more" button inside a truncated tweet to reveal full text
+    // X.com uses <button data-testid="tweet-text-show-more-link">
+    const btn = article.querySelector('button[data-testid="tweet-text-show-more-link"]');
+    if (btn) {
+      console.log("[X Reader] Clicking Show more inside tweet");
+      btn.click();
+      return true;
+    }
+    return false;
+  }
+
+  function expandAllShowMore() {
+    // First pass: click all "Show more" buttons in visible tweets
+    let count = 0;
+    const articles = document.querySelectorAll('article[data-testid="tweet"]');
+    for (const article of articles) {
+      if (expandShowMore(article)) count++;
+    }
+    return count;
+  }
+
   function extractTweets() {
     const articles = document.querySelectorAll('article[data-testid="tweet"]');
     const tweets = [];
@@ -298,14 +320,17 @@
     state.speaking = true;
 
     if (state.readQueue.length === 0) {
-      // Try clicking "Show more" / "Show N posts" first
+      // Expand truncated tweets + click timeline "Show more" buttons
+      const expanded = expandAllShowMore();
       clickShowMore();
+      if (expanded > 0) await new Promise((r) => setTimeout(r, 800));
       await new Promise((r) => setTimeout(r, 1500));
 
       const newTweets = extractTweets();
       if (newTweets.length === 0) {
         window.scrollBy({ top: 600, behavior: "smooth" });
         await new Promise((r) => setTimeout(r, 2500));
+        expandAllShowMore();
         clickShowMore();
         await new Promise((r) => setTimeout(r, 1500));
         if (!state.playing || state.paused) { state.speaking = false; return; }
@@ -313,6 +338,7 @@
         if (retry.length === 0) {
           window.scrollBy({ top: 600, behavior: "smooth" });
           await new Promise((r) => setTimeout(r, 2500));
+          expandAllShowMore();
           const last = extractTweets();
           if (last.length === 0) {
             await speakText("No more tweets right now. Checking again shortly.");

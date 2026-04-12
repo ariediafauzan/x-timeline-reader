@@ -15,6 +15,7 @@ CORS(app)
 
 # ── Engine registry ──────────────────────────────────────────────────
 ENGINES = {
+    # ── Fast ─────────────────────────────────────────────────────────
     "edge-tts": {
         "name": "Edge TTS (Cloud)",
         "ram": 0,
@@ -36,7 +37,22 @@ ENGINES = {
             "Sonia": "en-GB-SoniaNeural",
         },
     },
-    # kokoro removed: requires Python <3.13, venv is 3.14
+    "pocket-tts": {
+        "name": "Pocket TTS 100M",
+        "ram": 0.5,
+        "quality": "good",
+        "speed": "fast",
+        "note": "Kyutai Labs. CPU-only, ~6x realtime. Lightweight & fast.",
+        "type": "local",
+        "pip": "pocket-tts",
+        "hf_model": "kyutai/pocket-tts",
+        "voices": {
+            "Alba": "alba", "Marius": "marius", "Javert": "javert",
+            "Jean": "jean", "Fantine": "fantine", "Cosette": "cosette",
+            "Eponine": "eponine", "Azelma": "azelma",
+        },
+    },
+    # ── Medium ───────────────────────────────────────────────────────
     "qwen3-0.6b": {
         "name": "Qwen3 TTS 0.6B",
         "ram": 2.5,
@@ -51,6 +67,7 @@ ENGINES = {
             "Serena": "Serena", "Dylan": "Dylan", "Eric": "Eric",
         },
     },
+    # ── Slow (high quality) ──────────────────────────────────────────
     "qwen3-1.7b": {
         "name": "Qwen3 TTS 1.7B",
         "ram": 7,
@@ -65,7 +82,6 @@ ENGINES = {
             "Serena": "Serena", "Dylan": "Dylan", "Eric": "Eric",
         },
     },
-    # parler-mini removed: tokenizers fails to build on Python 3.14
     "voxcpm2": {
         "name": "VoxCPM2 0.5B",
         "ram": 2,
@@ -77,21 +93,6 @@ ENGINES = {
         "hf_model": "openbmb/VoxCPM2",
         "voices": {
             "Default": "default",
-        },
-    },
-    "pocket-tts": {
-        "name": "Pocket TTS 100M",
-        "ram": 0.5,
-        "quality": "good",
-        "speed": "fast",
-        "note": "Kyutai Labs. CPU-only, ~6x realtime. Lightweight & fast.",
-        "type": "local",
-        "pip": "pocket-tts",
-        "hf_model": "kyutai/pocket-tts",
-        "voices": {
-            "Alba": "alba", "Marius": "marius", "Javert": "javert",
-            "Jean": "jean", "Fantine": "fantine", "Cosette": "cosette",
-            "Eponine": "eponine", "Azelma": "azelma",
         },
     },
 }
@@ -910,6 +911,19 @@ def _format_size(bytes_val):
     if bytes_val >= 1024 ** 2:
         return f"{bytes_val / (1024 ** 2):.0f} MB"
     return f"{bytes_val / 1024:.0f} KB"
+
+
+@app.route("/shutdown", methods=["POST"])
+def shutdown():
+    """Gracefully shut down the server."""
+    print("[TTS] Shutdown requested via API.")
+    func = request.environ.get("werkzeug.server.shutdown")
+    if func:
+        func()
+        return jsonify({"status": "shutting_down"})
+    # Werkzeug >= 2.1 removed shutdown function — use os._exit
+    threading.Thread(target=lambda: (time.sleep(0.5), os._exit(0)), daemon=True).start()
+    return jsonify({"status": "shutting_down"})
 
 
 if __name__ == "__main__":

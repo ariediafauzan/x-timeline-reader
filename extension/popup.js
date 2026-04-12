@@ -30,6 +30,11 @@ const dlCancel = document.getElementById("dlCancel");
 const dlProgressFill = document.getElementById("dlProgressFill");
 const dlPercent = document.getElementById("dlPercent");
 
+const serverDot = document.getElementById("serverDot");
+const serverLabel = document.getElementById("serverLabel");
+const serverBtn = document.getElementById("serverBtn");
+const serverBar = document.getElementById("serverBar");
+
 let tabId = null;
 let filterTimeout = null;
 let currentEngineId = "edge-tts";
@@ -37,6 +42,8 @@ let activeHfModelId = null;
 let engines = [];
 let downloadAbort = null;
 let progressInterval = null;
+let serverOnline = false;
+let serverPollInterval = null;
 
 // ── Tab switching ───────────────────────────────────────────────────
 document.querySelectorAll(".tab").forEach((tab) => {
@@ -441,34 +448,115 @@ async function loadCachedModels() {
   }
 }
 
-// ── Server auto-start ───────────────────────────────────────────────
-async function tryStartServer() {
-  serverHint.textContent = "Server is sleeping. Waking up...";
-  serverHint.style.display = "block";
-
-  // Try to start via native messaging (if host is installed)
-  try {
-    chrome.runtime.sendNativeMessage("com.xreader.tts", { action: "start" }, (resp) => {
-      if (chrome.runtime.lastError) {
-        // Native host not installed — show manual instructions
-        serverHint.innerHTML = `Server offline. Run in Terminal:<br><code style="user-select:all;cursor:pointer;background:#1e2e3d;padding:2px 6px;border-radius:4px;">~/X\\ reading/start_server.sh</code>`;
-        return;
-      }
-      // Server started — retry connection after a moment
-      setTimeout(async () => {
-        const h = await serverFetch("/health");
-        if (h && h.status === "ready") {
-          currentEngineId = h.engine || "edge-tts";
-          setEngine(h.engine_name || "Edge TTS");
-          populateVoices(h.speakers || []);
-          serverHint.style.display = "none";
-        }
-      }, 3000);
-    });
-  } catch {
-    serverHint.innerHTML = `Server offline. Run in Terminal:<br><code style="user-select:all;cursor:pointer;background:#1e2e3d;padding:2px 6px;border-radius:4px;">~/X\\ reading/start_server.sh</code>`;
+// ── Server control ──────────────────────────────────────────────────
+function setServerUI(online) {
+  serverOnline = online;
+  if (online) {
+    serverDot.className = "server-dot online";
+    serverLabel.textContent = "Server running";
+    serverBtn.textContent = "Stop";
+    serverBtn.className = "server-btn stop";
+    serverBtn.disabled = false;
+    serverHint.style.display = "none";
+  } else {
+    serverDot.className = "server-dot offline";
+    serverLabel.textContent = "Server offline";
+    serverBtn.textContent = "Start";
+    serverBtn.className = "server-btn start";
+    serverBtn.disabled = false;
   }
 }
+
+async function checkServerStatus() {
+  const h = await serverFetch("/health");
+  if (h && h.status === "ready") {
+    if (!serverOnline) {
+      setServerUI(true);
+      currentEngineId = h.engine || "edge-tts";
+      setEngine(h.engine_name || "Edge TTS");
+      populateVoices(h.speakers || []);
+    }
+  } else {
+    if (serverOnline) {
+      setServerUI(false);
+      setEngine("browser");
+    }
+  }
+}
+
+function startServerPoll() {
+  if (serverPollInterval) return;
+  serverPollInterval = setInterval(checkServerStatus, 5000);
+}
+
+function stopServerPoll() {
+  if (serverPollInterval) {
+    clearInterval(serverPollInterval);
+    serverPollInterval = null;
+  }
+}
+
+async function startServer() {
+  serverBtn.disabled = true;
+  serverBtn.textContent = "Starting...";
+  serverLabel.textContent = "Starting server...";
+  serverDot.className = "server-dot";
+
+  // Try native messaging first
+  let nativeOk = false;
+  try {
+    await new Promise((resolve) => {
+      chrome.runtime.sendNativeMessage("com.xreader.tts", { action: "start" }, (resp) => {
+        nativeOk = !chrome.runtime.lastError;
+        resolve();
+      });
+    });
+  } catch {}
+
+  if (!nativeOk) {
+    // Native host not installed — show one-time setup hint
+    serverHint.innerHTML = `<strong>One-time setup:</strong> Run this in Terminal to enable the Start button:<br><code style="user-select:all;cursor:pointer;display:block;background:#1e2e3d;padding:6px 8px;border-radius:4px;margin:6px 0;font-size:11px;">./server/setup_native_host.sh</code>Or start the server manually:<br><code style="user-select:all;cursor:pointer;display:block;background:#1e2e3d;padding:6px 8px;border-radius:4px;margin:6px 0;font-size:11px;">./server/start_server.sh</code>`;
+    serverHint.style.display = "block";
+    setServerUI(false);
+    return;
+  }
+
+  // Poll until server is up (max ~8s)
+  for (let i = 0; i < 8; i++) {
+    await new Promise((r) => setTimeout(r, 1000));
+    const h = await serverFetch("/health");
+    if (h && h.status === "ready") {
+      setServerUI(true);
+      currentEngineId = h.engine || "edge-tts";
+      setEngine(h.engine_name || "Edge TTS");
+      populateVoices(h.speakers || []);
+      return;
+    }
+  }
+
+  // Timed out
+  serverHint.innerHTML = `Server didn't respond. Try manually:<br><code style="user-select:all;cursor:pointer;background:#1e2e3d;padding:2px 6px;border-radius:4px;">./server/start_server.sh</code>`;
+  serverHint.style.display = "block";
+  setServerUI(false);
+}
+
+async function stopServer() {
+  serverBtn.disabled = true;
+  serverBtn.textContent = "Stopping...";
+  await serverFetch("/shutdown", { method: "POST" });
+  // Give it a moment to die
+  await new Promise((r) => setTimeout(r, 1000));
+  setServerUI(false);
+  setEngine("browser");
+}
+
+serverBtn.addEventListener("click", () => {
+  if (serverOnline) {
+    stopServer();
+  } else {
+    startServer();
+  }
+});
 
 // ── Init ────────────────────────────────────────────────────────────
 async function init() {
@@ -487,15 +575,16 @@ async function init() {
   // Check server & get current engine info
   const health = await serverFetch("/health");
   if (health && health.status === "ready") {
+    setServerUI(true);
     currentEngineId = health.engine || "edge-tts";
     activeHfModelId = health.model_id || null;
     setEngine(health.engine_name || "Edge TTS");
     populateVoices(health.speakers || []);
   } else {
+    setServerUI(false);
     setEngine("browser");
-    // Try to wake the server via launchctl
-    tryStartServer();
   }
+  startServerPoll();
 
   // Restore content script state
   const stateResp = await sendMsg({ action: "getState" });

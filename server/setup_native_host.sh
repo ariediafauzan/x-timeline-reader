@@ -1,30 +1,48 @@
 #!/bin/bash
-# Install the Native Messaging host so Chrome can auto-start the TTS server
+# Install the Native Messaging host so Chrome can auto-start the TTS server.
+# Works on macOS, Linux, and WSL. No extension ID needed — it's fixed in manifest.json.
+
+set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 HOST_NAME="com.xreader.tts"
 NATIVE_HOST="$SCRIPT_DIR/native_host.py"
 
-# Get the Chrome extension ID
+# Fixed extension ID (deterministic via "key" in manifest.json)
+EXT_ID="jbhpehdkpliofbccdiekkohkfdkhahbc"
+
 echo "======================================"
 echo "  X Reader TTS — Native Host Setup"
 echo "======================================"
 echo ""
-echo "This lets Chrome auto-start the TTS server when you open the extension."
-echo ""
-echo "1. Open chrome://extensions in Chrome"
-echo "2. Find 'X Timeline Reader' and copy its ID"
-echo "   (looks like: abcdefghijklmnopabcdefghijklmnop)"
-echo ""
-read -p "Paste your extension ID: " EXT_ID
 
-if [ -z "$EXT_ID" ]; then
-    echo "Error: No extension ID provided."
-    exit 1
-fi
+# Make native_host.py executable
+chmod +x "$NATIVE_HOST"
 
-# Chrome native messaging hosts directory
-CHROME_DIR="$HOME/Library/Application Support/Google/Chrome/NativeMessagingHosts"
+# Detect OS and set Chrome native messaging directory
+OS="$(uname -s)"
+case "$OS" in
+    Darwin)
+        CHROME_DIR="$HOME/Library/Application Support/Google/Chrome/NativeMessagingHosts"
+        ;;
+    Linux)
+        CHROME_DIR="$HOME/.config/google-chrome/NativeMessagingHosts"
+        # Also support Chromium
+        if [ ! -d "$HOME/.config/google-chrome" ] && [ -d "$HOME/.config/chromium" ]; then
+            CHROME_DIR="$HOME/.config/chromium/NativeMessagingHosts"
+        fi
+        ;;
+    MINGW*|MSYS*|CYGWIN*)
+        echo "On Windows, use setup_native_host.bat instead (or run manually)."
+        echo "See README for instructions."
+        exit 1
+        ;;
+    *)
+        echo "Unsupported OS: $OS"
+        exit 1
+        ;;
+esac
+
 mkdir -p "$CHROME_DIR"
 
 # Write the native messaging host manifest
@@ -40,10 +58,9 @@ cat > "$CHROME_DIR/$HOST_NAME.json" <<EOF
 }
 EOF
 
-echo ""
-echo "Done! Native messaging host installed at:"
+echo "Installed native messaging host:"
 echo "  $CHROME_DIR/$HOST_NAME.json"
 echo ""
-echo "Now reload the extension in chrome://extensions and it will"
-echo "auto-start the server whenever you open X."
+echo "You can now start/stop the TTS server directly from the"
+echo "extension popup — no terminal needed."
 echo ""
