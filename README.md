@@ -49,6 +49,7 @@ pip install -r server/requirements.txt
 ### 3. Enable Start/Stop button (one-time)
 
 ```bash
+cd x-timeline-reader   # if you're not already in the project folder
 ./server/setup_native_host.sh
 ```
 
