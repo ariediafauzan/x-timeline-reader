@@ -186,9 +186,21 @@ For running TTS models locally on your machine.
 
 > **Note:** Local models are loaded on-demand and auto-unload after 5 minutes of inactivity. The server itself shuts down after 10 minutes idle. Your machine is not impacted when you're not using the extension.
 
+### Edge TTS — works on basically anything
+
+Edge TTS is the default engine and uses Microsoft's neural voices via the cloud. It runs on:
+
+- Any CPU (Intel, AMD, Apple Silicon, even Raspberry Pi)
+- Any OS (macOS, Windows, Linux)
+- As low as **512 MB RAM** — the server itself uses ~60 MB
+- No GPU, no model downloads, no disk space
+- Just needs an **internet connection**
+
+The voice quality is excellent (natural-sounding neural voices with 11 voice options). For most users, there's no reason to switch to a local model unless you need **offline/private** TTS or want to experiment with different voices.
+
 ### What if I don't have a GPU?
 
-No problem. The default engine is **Edge TTS** (cloud) which sounds great, is fast, and uses zero GPU. Local models are entirely optional for users who want offline/private TTS.
+No problem. Edge TTS works great without one. Local models are entirely optional for users who want offline/private TTS or want to experiment with open-source voices.
 
 ## Contributing
 
