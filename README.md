@@ -2,8 +2,10 @@
 
 A Chrome extension that reads your X (Twitter) timeline aloud so you can listen in the background while working.
 
-<!-- Replace with your own screenshot/demo -->
-<!-- ![Demo](docs/screenshot.png) -->
+<p align="center">
+  <img src="docs/player-tab.png" width="360" alt="Player tab">
+  <img src="docs/models-tab.png" width="360" alt="Models tab">
+</p>
 
 ## Why?
 
@@ -33,13 +35,13 @@ cd x-timeline-reader
 
 python3 -m venv venv
 source venv/bin/activate
-pip install -r requirements.txt
+pip install -r server/requirements.txt
 ```
 
 ### 2. Start the TTS server
 
 ```bash
-./start_server.sh
+./server/start_server.sh
 ```
 
 The server runs on `http://localhost:8787` and auto-shuts down after 10 minutes of inactivity.
@@ -49,7 +51,7 @@ The server runs on `http://localhost:8787` and auto-shuts down after 10 minutes 
 1. Open `chrome://extensions`
 2. Enable **Developer mode** (top right)
 3. Click **Load unpacked**
-4. Select the project folder
+4. Select the **`extension/`** folder (not the project root)
 
 ### 4. Use it
 
@@ -130,7 +132,7 @@ The default engine (Edge TTS) sounds great and needs zero GPU. Local models are 
 
 ```bash
 # Edit the plist to point to your install path, then:
-cp com.xreader.tts.plist ~/Library/LaunchAgents/
+cp server/com.xreader.tts.plist ~/Library/LaunchAgents/
 launchctl load ~/Library/LaunchAgents/com.xreader.tts.plist
 ```
 
@@ -141,7 +143,7 @@ The server starts on login, auto-shuts down after 10 min idle, and only restarts
 Let the extension auto-launch the server when you open X:
 
 ```bash
-./setup_native_host.sh
+./server/setup_native_host.sh
 ```
 
 Prompts for your Chrome extension ID (from `chrome://extensions`).
@@ -150,29 +152,29 @@ Prompts for your Chrome extension ID (from `chrome://extensions`).
 
 ```bash
 source venv/bin/activate
-
-# Qwen3 TTS (Alibaba)
-pip install qwen-tts
-
-# VoxCPM2 (OpenBMB) — very realistic voice
-pip install voxcpm
+pip install qwen-tts    # Qwen3 TTS (Alibaba)
+pip install voxcpm      # VoxCPM2 (OpenBMB) — very realistic voice
 ```
 
 ## Project Structure
 
 ```
-├── manifest.json           # Chrome extension manifest v3
-├── content.js              # Tweet extraction, TTS playback, scrolling
-├── popup.html              # Popup UI (dark X theme)
-├── popup.js                # Popup controller (playback, models, downloads)
-├── tts_server.py           # Multi-engine Flask TTS server
-├── start_server.sh         # Server launch script
-├── native_host.py          # Native Messaging host for auto-start
-├── setup_native_host.sh    # Native host installer
-├── com.xreader.tts.plist   # macOS Launch Agent template
-├── requirements.txt        # Python dependencies
-├── icons/                  # Extension icons
-├── LICENSE                 # MIT
+├── extension/                  # Chrome extension (load this in chrome://extensions)
+│   ├── manifest.json           #   Extension manifest v3
+│   ├── content.js              #   Tweet extraction, TTS playback, scrolling
+│   ├── popup.html              #   Popup UI (dark X theme)
+│   ├── popup.js                #   Popup controller (playback, models, downloads)
+│   └── icons/                  #   Extension icons
+├── server/                     # TTS backend
+│   ├── tts_server.py           #   Multi-engine Flask TTS server
+│   ├── start_server.sh         #   Server launch script
+│   ├── native_host.py          #   Native Messaging host for auto-start
+│   ├── setup_native_host.sh    #   Native host installer
+│   ├── com.xreader.tts.plist   #   macOS Launch Agent template
+│   └── requirements.txt        #   Python dependencies
+├── docs/                       # Screenshots and assets
+├── CHANGELOG.md
+├── LICENSE                     # MIT
 └── README.md
 ```
 
@@ -199,7 +201,7 @@ pip install voxcpm
 | Problem | Fix |
 |---------|-----|
 | No sound | Check server is running: `curl http://localhost:8787/health` |
-| "Server offline" in popup | Run `./start_server.sh` or set up auto-start |
+| "Server offline" in popup | Run `./server/start_server.sh` or set up auto-start |
 | Robotic voice | Make sure you're on Edge TTS, not Browser fallback |
 | Model download stuck | Check internet connection; try a different model |
 | High RAM usage | Switch to Edge TTS (cloud); local models unload after 5 min idle |

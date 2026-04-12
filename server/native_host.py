@@ -39,7 +39,11 @@ def is_server_running():
 
 def start_server():
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    venv_python = os.path.join(script_dir, "venv", "bin", "python")
+    project_dir = os.path.dirname(script_dir)
+    # venv lives in project root, server script in server/
+    venv_python = os.path.join(project_dir, "venv", "bin", "python")
+    if not os.path.exists(venv_python):
+        venv_python = os.path.join(script_dir, "venv", "bin", "python")
     server_script = os.path.join(script_dir, "tts_server.py")
     log = open("/tmp/xreader-tts.log", "a")
     subprocess.Popen(
