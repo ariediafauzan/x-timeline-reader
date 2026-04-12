@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      width: 360px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #15202b;
+      color: #e7e9ea;
+      padding: 16px;
+    }
+
+    h1 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    h1 .logo {
+      width: 22px; height: 22px;
+      background: #e7e9ea; border-radius: 5px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 900; color: #15202b;
+    }
+
+    .engine-badge {
+      font-size: 10px; padding: 3px 8px;
+      border-radius: 10px; font-weight: 600; margin-left: auto;
+    }
+    .engine-badge.qwen { background: #1a8a4a; color: #fff; }
+    .engine-badge.browser { background: #526471; color: #ccc; }
+
+    /* Tabs */
+    .tabs {
+      display: flex; gap: 0; margin-bottom: 14px;
+      border-bottom: 1px solid #38444d;
+    }
+    .tab {
+      flex: 1; padding: 8px 4px; text-align: center;
+      font-size: 12px; font-weight: 600; color: #8b98a5;
+      cursor: pointer; border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .tab:hover { color: #e7e9ea; }
+    .tab.active { color: #1d9bf0; border-bottom-color: #1d9bf0; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .controls { display: flex; gap: 6px; margin-bottom: 14px; }
+
+    button {
+      flex: 1; padding: 9px 4px; border: none;
+      border-radius: 20px; font-size: 12px; font-weight: 600;
+      cursor: pointer; transition: opacity 0.15s;
+    }
+    button:hover { opacity: 0.85; }
+    button:disabled { opacity: 0.35; cursor: default; }
+
+    #btnPlay { background: #1d9bf0; color: #fff; }
+    #btnPause { background: #526471; color: #fff; }
+    #btnSkip { background: #526471; color: #fff; }
+    #btnStop { background: #67070f; color: #fff; }
+
+    .setting { margin-bottom: 12px; }
+
+    label {
+      display: block; font-size: 11px; color: #8b98a5;
+      margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.4px;
+    }
+
+    select, input[type="text"] {
+      width: 100%; background: #1e2e3d; color: #e7e9ea;
+      border: 1px solid #38444d; border-radius: 8px;
+      padding: 7px 10px; font-size: 13px; outline: none;
+    }
+    select:focus, input[type="text"]:focus { border-color: #1d9bf0; }
+    input[type="text"]::placeholder { color: #526471; }
+
+    .hint { font-size: 10px; color: #526471; margin-top: 3px; }
+
+    input[type="range"] {
+      width: 100%; padding: 0; height: 6px;
+      -webkit-appearance: none; appearance: none;
+      border: none; background: #38444d; border-radius: 3px; outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 16px; height: 16px;
+      border-radius: 50%; background: #1d9bf0; cursor: pointer;
+    }
+
+    .rate-display {
+      text-align: right; font-size: 11px; color: #8b98a5; margin-top: 2px;
+    }
+
+    .now-reading {
+      background: #1e2e3d; border-radius: 10px;
+      padding: 10px 12px; margin-top: 4px; min-height: 52px;
+    }
+    .now-reading .nr-label {
+      font-size: 10px; color: #8b98a5; margin-bottom: 4px;
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .now-reading .nr-author { font-size: 13px; font-weight: 600; color: #1d9bf0; }
+    .now-reading .nr-text {
+      font-size: 12px; color: #c4ccd2; margin-top: 4px;
+      line-height: 1.4; max-height: 80px; overflow-y: auto;
+    }
+
+    .status {
+      font-size: 11px; color: #8b98a5; text-align: center; margin-top: 10px;
+    }
+
+    .server-hint {
+      font-size: 10px; color: #8b6b3a; background: #2a2215;
+      border-radius: 6px; padding: 6px 10px; margin-bottom: 12px; line-height: 1.4;
+    }
+    .server-hint code {
+      background: #38444d; padding: 1px 4px; border-radius: 3px; font-size: 10px;
+    }
+
+    .toggles { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; }
+    .toggle-row span { font-size: 12px; color: #c4ccd2; }
+    .toggle { position: relative; width: 36px; height: 20px; flex-shrink: 0; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle .slider {
+      position: absolute; inset: 0; background: #38444d;
+      border-radius: 10px; cursor: pointer; transition: background 0.2s;
+    }
+    .toggle .slider::before {
+      content: ""; position: absolute; width: 14px; height: 14px;
+      left: 3px; top: 3px; background: #e7e9ea;
+      border-radius: 50%; transition: transform 0.2s;
+    }
+    .toggle input:checked + .slider { background: #1d9bf0; }
+    .toggle input:checked + .slider::before { transform: translateX(16px); }
+
+    /* Model picker */
+    .model-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .model-card {
+      background: #1e2e3d; border: 1px solid #38444d;
+      border-radius: 10px; padding: 10px 12px; cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .model-card:hover { border-color: #526471; }
+    .model-card.active { border-color: #1d9bf0; }
+    .model-card.loading { opacity: 0.5; pointer-events: none; }
+
+    .model-top {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 4px;
+    }
+    .model-name { font-size: 13px; font-weight: 600; }
+    .model-badges { display: flex; gap: 4px; }
+    .badge {
+      font-size: 9px; padding: 2px 6px; border-radius: 8px; font-weight: 600;
+    }
+    .badge.rec { background: #1a8a4a; color: #fff; }
+    .badge.warn { background: #67070f; color: #fff; }
+    .badge.cloud { background: #1d9bf0; color: #fff; }
+    .badge.local { background: #526471; color: #fff; }
+
+    .model-meta {
+      font-size: 10px; color: #8b98a5; display: flex; gap: 10px;
+    }
+    .model-note { font-size: 10px; color: #526471; margin-top: 3px; }
+
+    .ram-bar {
+      margin-top: 10px; margin-bottom: 6px;
+    }
+    .ram-bar-label {
+      font-size: 10px; color: #8b98a5; margin-bottom: 3px;
+    }
+    .ram-bar-track {
+      height: 6px; background: #38444d; border-radius: 3px; overflow: hidden;
+    }
+    .ram-bar-fill {
+      height: 100%; background: #1d9bf0; border-radius: 3px;
+      transition: width 0.3s;
+    }
+
+    .model-error {
+      font-size: 10px; color: #e05555; background: #2a1515;
+      border-radius: 6px; padding: 6px 10px; margin-top: 8px;
+    }
+
+    /* Download overlay */
+    .download-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(21, 32, 43, 0.92);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 100; gap: 12px;
+    }
+    .download-overlay .dl-spinner {
+      width: 32px; height: 32px;
+      border: 3px solid #38444d;
+      border-top-color: #1d9bf0;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .download-overlay .dl-title {
+      font-size: 14px; font-weight: 600; color: #e7e9ea;
+      text-align: center;
+    }
+    .download-overlay .dl-subtitle {
+      font-size: 11px; color: #8b98a5;
+      text-align: center; max-width: 260px; line-height: 1.4;
+    }
+    .download-overlay .dl-cancel {
+      margin-top: 4px; font-size: 11px; color: #8b98a5;
+      background: none; border: 1px solid #38444d;
+      border-radius: 16px; padding: 5px 16px; cursor: pointer;
+      flex: none;
+    }
+    .download-overlay .dl-cancel:hover { border-color: #8b98a5; color: #e7e9ea; }
+
+    .download-overlay .dl-progress {
+      width: 80%; display: flex; align-items: center; gap: 8px;
+    }
+    .dl-progress-track {
+      flex: 1; height: 6px; background: #38444d; border-radius: 3px; overflow: hidden;
+    }
+    .dl-progress-fill {
+      height: 100%; background: #1d9bf0; border-radius: 3px;
+      transition: width 0.4s ease;
+    }
+    .dl-percent {
+      font-size: 12px; font-weight: 600; color: #e7e9ea; min-width: 36px;
+      text-align: right;
+    }
+
+    .model-card.loading-model {
+      border-color: #1d9bf0;
+      animation: pulse-border 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse-border {
+      0%, 100% { border-color: #1d9bf0; }
+      50% { border-color: #38444d; }
+    }
+
+    .trending-card {
+      background: #1e2e3d; border: 1px solid #38444d;
+      border-radius: 10px; padding: 9px 12px;
+      transition: border-color 0.15s;
+    }
+    .trending-card.supported { cursor: pointer; }
+    .trending-card.supported:hover { border-color: #1a8a4a; }
+    .trending-card.loading-model {
+      border-color: #1d9bf0;
+      animation: pulse-border 1.5s ease-in-out infinite;
+    }
+
+    .trending-top {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .trending-name {
+      font-size: 12px; font-weight: 600;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      max-width: 180px;
+    }
+    .trending-stats {
+      display: flex; gap: 8px; font-size: 10px; color: #8b98a5;
+    }
+    .trending-bottom {
+      display: flex; gap: 4px; margin-top: 4px; align-items: center;
+    }
+    .hf-link {
+      font-size: 9px; color: #1d9bf0; text-decoration: none; margin-left: auto;
+    }
+    .hf-link:hover { text-decoration: underline; }
+
+    .cache-card {
+      background: #1e2e3d; border: 1px solid #38444d;
+      border-radius: 10px; padding: 9px 12px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .cache-info { flex: 1; min-width: 0; }
+    .cache-name {
+      font-size: 12px; font-weight: 600; color: #e7e9ea;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .cache-size { font-size: 10px; color: #8b98a5; margin-top: 2px; }
+    .cache-delete {
+      flex: none; background: none; border: 1px solid #67070f;
+      color: #e05555; font-size: 10px; font-weight: 600;
+      border-radius: 14px; padding: 4px 10px; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .cache-delete:hover { background: #67070f; color: #fff; }
+    .cache-delete:disabled { opacity: 0.3; cursor: default; }
+
+    .not-on-x {
+      text-align: center; padding: 20px 10px;
+      color: #8b98a5; font-size: 13px; line-height: 1.5;
+    }
+    .not-on-x a { color: #1d9bf0; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div id="main" style="display:none;">
+    <h1>
+      <span class="logo">X</span> Timeline Reader
+      <span class="engine-badge" id="engineBadge">--</span>
+    </h1>
+
+    <div class="server-hint" id="serverHint" style="display:none;">
+      For natural voice, run: <code>source venv/bin/activate && python tts_server.py</code>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="player">Player</div>
+      <div class="tab" data-tab="models">Models</div>
+    </div>
+
+    <!-- Player Tab -->
+    <div class="tab-content active" id="tab-player">
+      <div class="setting">
+        <label for="filterInput">Topic Filter</label>
+        <input type="text" id="filterInput" placeholder="e.g. AI, LLM, startup">
+        <div class="hint">Comma-separated. Leave empty for all.</div>
+      </div>
+
+      <div class="setting" id="speakerSetting">
+        <label for="speakerSelect">Voice</label>
+        <select id="speakerSelect"></select>
+      </div>
+
+      <div class="toggles">
+        <label>Options</label>
+        <div class="toggle-row">
+          <span>Read quoted retweets</span>
+          <label class="toggle"><input type="checkbox" id="toggleQuotes" checked><span class="slider"></span></label>
+        </div>
+        <div class="toggle-row">
+          <span>Read long tweets (articles)</span>
+          <label class="toggle"><input type="checkbox" id="toggleLong"><span class="slider"></span></label>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button id="btnPlay">Play</button>
+        <button id="btnPause" disabled>Pause</button>
+        <button id="btnSkip" disabled>Skip</button>
+        <button id="btnStop" disabled>Stop</button>
+      </div>
+
+      <div class="setting">
+        <label for="rateSlider">Speed</label>
+        <input type="range" id="rateSlider" min="0.5" max="2" step="0.1" value="1">
+        <div class="rate-display" id="rateDisplay">1.0x</div>
+      </div>
+
+      <div class="now-reading">
+        <div class="nr-label">Now Reading</div>
+        <div class="nr-author" id="nrAuthor">--</div>
+        <div class="nr-text" id="nrText">Press Play to start listening</div>
+      </div>
+
+      <div class="status" id="status">Ready</div>
+    </div>
+
+    <!-- Models Tab -->
+    <div class="tab-content" id="tab-models">
+      <div class="ram-bar">
+        <div class="ram-bar-label">System RAM: <strong id="ramAmount">--</strong> GB</div>
+        <div class="ram-bar-track"><div class="ram-bar-fill" id="ramFill" style="width:0%"></div></div>
+      </div>
+      <div class="model-list" id="modelList">
+        <div class="hint" style="text-align:center;padding:20px 0;">Loading models...</div>
+      </div>
+      <div class="model-error" id="modelError" style="display:none;"></div>
+
+      <div style="margin-top:14px;">
+        <label>Trending on HuggingFace</label>
+        <div class="hint" style="margin-bottom:8px;">Top TTS models by community. Green = one-click install.</div>
+        <div class="model-list" id="trendingList">
+          <div class="hint" style="text-align:center;padding:12px 0;">Click Models tab to load...</div>
+        </div>
+      </div>
+
+      <div style="margin-top:14px;" id="cacheSection">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <label>Downloaded Models</label>
+          <span class="hint" id="cacheTotalSize"></span>
+        </div>
+        <div class="hint" style="margin-bottom:8px;">Models cached on disk. Delete to free space.</div>
+        <div class="model-list" id="cacheList">
+          <div class="hint" style="text-align:center;padding:12px 0;">Loading...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="notOnX" class="not-on-x" style="display:none;">
+    <h1><span class="logo">X</span> Timeline Reader</h1>
+    <p>Open <a href="https://x.com/home" target="_blank">x.com</a> first, then click this extension to start listening.</p>
+  </div>
+
+  <div class="download-overlay" id="downloadOverlay" style="display:none;">
+    <div class="dl-spinner"></div>
+    <div class="dl-title" id="dlTitle">Loading model...</div>
+    <div class="dl-progress">
+      <div class="dl-progress-track">
+        <div class="dl-progress-fill" id="dlProgressFill" style="width:0%"></div>
+      </div>
+      <div class="dl-percent" id="dlPercent">0%</div>
+    </div>
+    <div class="dl-subtitle" id="dlSubtitle">This may take a few minutes for first download.</div>
+    <button class="dl-cancel" id="dlCancel">Cancel</button>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

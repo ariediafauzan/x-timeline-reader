@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "X Timeline Reader",
+  "version": "1.0",
+  "description": "Reads your X timeline aloud so you can listen while working",
+  "permissions": ["activeTab", "storage", "nativeMessaging"],
+  "icons": {
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": "icons/icon48.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://x.com/*", "https://twitter.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

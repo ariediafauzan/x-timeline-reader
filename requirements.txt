@@ -1,0 +1,14 @@
+flask
+flask-cors
+edge-tts
+psutil
+soundfile
+requests
+huggingface_hub
+transformers
+torch
+torchaudio
+
+# Optional — local TTS engines (uncomment to install)
+# qwen-tts          # Qwen3 TTS 0.6B / 1.7B
+# voxcpm            # VoxCPM2 0.5B (realistic voice, slow)
