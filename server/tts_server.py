@@ -79,6 +79,21 @@ ENGINES = {
             "Default": "default",
         },
     },
+    "pocket-tts": {
+        "name": "Pocket TTS 100M",
+        "ram": 0.5,
+        "quality": "good",
+        "speed": "fast",
+        "note": "Kyutai Labs. CPU-only, ~6x realtime. Lightweight & fast.",
+        "type": "local",
+        "pip": "pocket-tts",
+        "hf_model": "kyutai/pocket-tts",
+        "voices": {
+            "Alba": "alba", "Marius": "marius", "Javert": "javert",
+            "Jean": "jean", "Fantine": "fantine", "Cosette": "cosette",
+            "Eponine": "eponine", "Azelma": "azelma",
+        },
+    },
 }
 
 # ── State ────────────────────────────────────────────────────────────
@@ -361,6 +376,14 @@ def load_local_model(engine_id):
         print("[TTS] VoxCPM2 loaded!")
         return True
 
+    if engine_id == "pocket-tts":
+        from pocket_tts import TTSModel
+        print("[TTS] Loading Pocket TTS (CPU)...")
+        local_model = TTSModel.load_model()
+        local_engine_id = engine_id
+        print("[TTS] Pocket TTS loaded!")
+        return True
+
     return False
 
 
@@ -452,11 +475,23 @@ def synthesize_voxcpm(text, speaker, rate):
     return buf, "audio/wav"
 
 
+def synthesize_pocket(text, speaker, rate):
+    import scipy.io.wavfile
+    voice_name = ENGINES["pocket-tts"]["voices"].get(speaker, "alba")
+    voice_state = local_model.get_state_for_audio_prompt(voice_name)
+    audio = local_model.generate_audio(voice_state, text)
+    buf = io.BytesIO()
+    scipy.io.wavfile.write(buf, local_model.sample_rate, audio.numpy())
+    buf.seek(0)
+    return buf, "audio/wav"
+
+
 SYNTH_MAP = {
     "edge-tts": synthesize_edge,
     "qwen3-0.6b": synthesize_qwen,
     "qwen3-1.7b": synthesize_qwen,
     "voxcpm2": synthesize_voxcpm,
+    "pocket-tts": synthesize_pocket,
     "_hf_pipeline": synthesize_hf_pipeline,
 }
 
@@ -695,6 +730,7 @@ SUPPORTED_PREFIXES = {
     "Qwen/Qwen3-TTS-12Hz-0.6B": "qwen3-0.6b",
     "Qwen/Qwen3-TTS-12Hz-1.7B": "qwen3-1.7b",
     "openbmb/VoxCPM": "voxcpm2",
+    "kyutai/pocket-tts": "pocket-tts",
 }
 
 # Models known to NOT work with transformers pipeline auto-loading
@@ -719,6 +755,8 @@ def estimate_ram(model_id, safetensors_size=None):
     lower = model_id.lower()
     if safetensors_size:
         return round(safetensors_size / (1024 ** 3) * 1.2, 1)  # +20% overhead
+    if "pocket-tts" in lower or "100m" in lower:
+        return 0.5
     if "0.5b" in lower or "82m" in lower:
         return 0.5
     if "0.6b" in lower:

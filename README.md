@@ -17,7 +17,7 @@ Scrolling X is a time sink. This extension turns your timeline into a podcast �
 - **Topic filtering** — only read tweets matching your keywords (e.g. `AI, startup, tech`)
 - **Smart skipping** — automatically skips ads, promoted posts, paid partnerships, and video tweets
 - **Scroll & highlight** — scrolls through your timeline tweet-by-tweet with visual highlight
-- **Multiple TTS engines** — Edge TTS (cloud, default), Qwen3 TTS, VoxCPM2, or any HuggingFace model
+- **Multiple TTS engines** — Edge TTS (cloud, default), Pocket TTS, Qwen3 TTS, VoxCPM2, or any HuggingFace model
 - **Model marketplace** — browse trending HuggingFace TTS models and one-click install
 - **Speed control** — 0.5x to 2.0x playback speed
 - **Toggle options** — choose whether to read quoted retweets and long-form tweets
@@ -77,6 +77,7 @@ The server runs on `http://localhost:8787` and auto-shuts down after 10 minutes 
 │                                 │
 │  ├─ Edge TTS     (cloud, fast)  │
 │  ├─ Qwen3 TTS   (local, MPS)   │
+│  ├─ Pocket TTS  (local, CPU)   │
 │  ├─ VoxCPM2     (local, MPS)   │
 │  ├─ HuggingFace (any model)    │
 │  └─ Browser TTS (fallback)     │
@@ -88,6 +89,7 @@ The server runs on `http://localhost:8787` and auto-shuts down after 10 minutes 
 | Engine | Type | RAM | Quality | Speed | Notes |
 |--------|------|-----|---------|-------|-------|
 | **Edge TTS** | Cloud | ~60 MB | Great | ~1s | Default. Free, needs internet. 11 neural voices |
+| **Pocket TTS** | Local | ~0.5 GB | Good | ~1s | Kyutai Labs. CPU-only, 8 voices, ~6x realtime |
 | Qwen3 0.6B | Local | ~2.5 GB | Good | ~5-10s | Alibaba open-source |
 | Qwen3 1.7B | Local | ~7 GB | Great | ~15-30s | Best open-source quality. Needs 16 GB+ RAM |
 | VoxCPM2 | Local | ~2 GB | Great | ~20-30s | Very realistic. Pre-buffers next tweets |
@@ -124,7 +126,7 @@ Edge TTS uses Microsoft's neural voices. It works on any CPU — Intel, AMD, App
 
 ### No GPU? No problem.
 
-The default engine (Edge TTS) sounds great and needs zero GPU. Local models are entirely optional — for users who want offline/private TTS or want to experiment with open-source voices.
+The default engine (Edge TTS) sounds great and needs zero GPU. **Pocket TTS** is a great local alternative — 100M params, CPU-only, ~6x faster than realtime, no GPU needed. Other local models are optional for users who want to experiment with open-source voices.
 
 ## Optional Setup
 
@@ -152,8 +154,9 @@ Prompts for your Chrome extension ID (from `chrome://extensions`).
 
 ```bash
 source venv/bin/activate
-pip install qwen-tts    # Qwen3 TTS (Alibaba)
-pip install voxcpm      # VoxCPM2 (OpenBMB) — very realistic voice
+pip install pocket-tts   # Pocket TTS (Kyutai) — fast, CPU-only, 100M params
+pip install qwen-tts     # Qwen3 TTS (Alibaba) — needs MPS/CUDA
+pip install voxcpm       # VoxCPM2 (OpenBMB) — very realistic voice, needs MPS/CUDA
 ```
 
 ## Project Structure
