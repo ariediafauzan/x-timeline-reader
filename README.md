@@ -149,10 +149,46 @@ icons/                 # Extension icons
 
 ## Requirements
 
-- **Chrome** (or any Chromium-based browser)
-- **Python 3.10+** (3.12 recommended for widest compatibility)
-- **macOS with Apple Silicon** recommended for local models (MPS GPU acceleration)
-- **Internet** for Edge TTS (default engine) and HuggingFace model downloads
+### Minimum (Cloud TTS only — Edge TTS)
+
+Works on any machine. No GPU needed.
+
+| Component | Requirement |
+|-----------|-------------|
+| Browser | Chrome, Brave, Edge, or any Chromium-based browser |
+| Python | 3.10+ (3.12 recommended) |
+| RAM | 512 MB free (server uses ~60 MB idle) |
+| GPU | None |
+| Internet | Required (Edge TTS streams from Microsoft servers) |
+| OS | macOS, Linux, Windows |
+
+### Recommended (Local TTS models)
+
+For running TTS models locally on your machine.
+
+| Component | Requirement |
+|-----------|-------------|
+| RAM | 8 GB minimum, **16 GB+ recommended** |
+| GPU | Apple Silicon (M1/M2/M3/M4) for MPS acceleration, or NVIDIA GPU with CUDA 12+ |
+| Disk | 3-10 GB per model (cached in `~/.cache/huggingface/hub/`) |
+| OS | macOS (Apple Silicon) or Linux (NVIDIA GPU) |
+
+### Per-model hardware
+
+| Model | RAM needed | GPU | Disk | Generation speed |
+|-------|-----------|-----|------|-----------------|
+| Edge TTS (cloud) | ~60 MB | None | 0 | Instant (~1s) |
+| Qwen3 TTS 0.6B | ~2.5 GB | MPS / CUDA | ~5 GB | ~5-10s per tweet |
+| Qwen3 TTS 1.7B | ~7 GB | MPS / CUDA | ~9 GB | ~15-30s per tweet |
+| VoxCPM2 0.5B | ~2 GB | MPS / CUDA | ~4 GB | ~20-30s per tweet |
+| HuggingFace models | Varies | MPS / CUDA | Varies | Varies |
+| Browser fallback | 0 | None | 0 | Instant |
+
+> **Note:** Local models are loaded on-demand and auto-unload after 5 minutes of inactivity. The server itself shuts down after 10 minutes idle. Your machine is not impacted when you're not using the extension.
+
+### What if I don't have a GPU?
+
+No problem. The default engine is **Edge TTS** (cloud) which sounds great, is fast, and uses zero GPU. Local models are entirely optional for users who want offline/private TTS.
 
 ## Contributing
 
