@@ -6,7 +6,8 @@ const btnSkip = document.getElementById("btnSkip");
 const btnStop = document.getElementById("btnStop");
 const rateSlider = document.getElementById("rateSlider");
 const rateDisplay = document.getElementById("rateDisplay");
-const filterInput = document.getElementById("filterInput");
+const categoryGrid = document.getElementById("categoryGrid");
+const customKeywords = document.getElementById("customKeywords");
 const speakerSelect = document.getElementById("speakerSelect");
 const toggleQuotes = document.getElementById("toggleQuotes");
 const toggleLong = document.getElementById("toggleLong");
@@ -23,6 +24,9 @@ const ramFill = document.getElementById("ramFill");
 const trendingList = document.getElementById("trendingList");
 const cacheList = document.getElementById("cacheList");
 const cacheTotalSize = document.getElementById("cacheTotalSize");
+const upNext = document.getElementById("upNext");
+const upNextList = document.getElementById("upNextList");
+const tweetsReadCount = document.getElementById("tweetsReadCount");
 const downloadOverlay = document.getElementById("downloadOverlay");
 const dlTitle = document.getElementById("dlTitle");
 const dlSubtitle = document.getElementById("dlSubtitle");
@@ -37,6 +41,39 @@ const serverBar = document.getElementById("serverBar");
 
 let tabId = null;
 let filterTimeout = null;
+let selectedCategories = new Set();
+
+const CATEGORY_KEYWORDS = {
+  tech: ["tech", "software", "programming", "developer", "code", "coding", "javascript", "python", "rust", "typescript", "frontend", "backend", "api", "open source", "github", "startup", "saas", "devops", "linux", "web dev"],
+  ai: ["ai", "artificial intelligence", "machine learning", "llm", "gpt", "chatgpt", "claude", "openai", "anthropic", "deep learning", "neural", "transformer", "diffusion", "generative", "prompt", "agi", "fine-tuning", "embeddings", "rag"],
+  crypto: ["crypto", "bitcoin", "btc", "ethereum", "eth", "blockchain", "web3", "defi", "nft", "solana", "token", "wallet", "mining"],
+  business: ["business", "startup", "founder", "ceo", "vc", "fundraising", "revenue", "growth", "marketing", "sales", "b2b", "saas", "ipo", "acquisition", "valuation", "investor"],
+  politics: ["politics", "election", "president", "congress", "senate", "democrat", "republican", "policy", "government", "legislation", "vote", "campaign"],
+  science: ["science", "research", "study", "physics", "biology", "chemistry", "space", "nasa", "climate", "quantum", "genome", "medical", "neuroscience"],
+  sports: ["sports", "nba", "nfl", "soccer", "football", "basketball", "tennis", "cricket", "f1", "formula 1", "olympics", "world cup", "championship", "match", "league"],
+  gaming: ["gaming", "game", "playstation", "xbox", "nintendo", "steam", "esports", "rpg", "fps", "mmorpg", "indie game", "game dev", "unity", "unreal"],
+  entertainment: ["movie", "film", "music", "netflix", "disney", "anime", "manga", "tv show", "series", "album", "concert", "celebrity", "hollywood", "streaming"],
+  design: ["design", "ui", "ux", "figma", "typography", "branding", "logo", "illustration", "css", "tailwind", "color", "layout", "accessibility"],
+};
+
+function buildFilterString() {
+  const parts = [];
+  for (const cat of selectedCategories) {
+    parts.push(...(CATEGORY_KEYWORDS[cat] || []));
+  }
+  const custom = customKeywords.value.trim();
+  if (custom) {
+    parts.push(...custom.split(",").map(k => k.trim()).filter(Boolean));
+  }
+  return parts.join(",");
+}
+
+function syncFilter() {
+  clearTimeout(filterTimeout);
+  filterTimeout = setTimeout(() => {
+    sendMsg({ action: "setFilter", filter: buildFilterString() });
+  }, 300);
+}
 let currentEngineId = "edge-tts";
 let activeHfModelId = null;
 let engines = [];
@@ -592,10 +629,22 @@ async function init() {
     updateUI(stateResp.playing, stateResp.paused);
     rateSlider.value = stateResp.rate;
     rateDisplay.textContent = stateResp.rate.toFixed(1) + "x";
-    filterInput.value = stateResp.filter || "";
+    // Restore category chips & custom keywords from storage
+    const stored = await chrome.storage.local.get(["selectedCategories", "customKeywords"]);
+    if (stored.selectedCategories) {
+      selectedCategories = new Set(stored.selectedCategories);
+      categoryGrid.querySelectorAll(".cat-chip").forEach(chip => {
+        chip.classList.toggle("active", selectedCategories.has(chip.dataset.cat));
+      });
+    }
+    if (stored.customKeywords) customKeywords.value = stored.customKeywords;
     if (stateResp.speaker) speakerSelect.value = stateResp.speaker;
     if (stateResp.readQuotes !== undefined) toggleQuotes.checked = stateResp.readQuotes;
     if (stateResp.readLongTweets !== undefined) toggleLong.checked = stateResp.readLongTweets;
+    if (stateResp.tweetsRead !== undefined) {
+      tweetsReadCount.textContent = `${stateResp.tweetsRead} tweet${stateResp.tweetsRead === 1 ? "" : "s"} read`;
+    }
+    renderUpcoming(stateResp.upcoming);
     if (stateResp.playing) {
       statusEl.textContent = stateResp.paused ? "Paused" : "Reading...";
     }
@@ -604,7 +653,7 @@ async function init() {
 
 // ── Event listeners ─────────────────────────────────────────────────
 btnPlay.addEventListener("click", async () => {
-  await sendMsg({ action: "setFilter", filter: filterInput.value.trim() });
+  await sendMsg({ action: "setFilter", filter: buildFilterString() });
   await sendMsg({ action: "setSpeaker", speaker: speakerSelect.value });
   await sendMsg({ action: "start" });
   updateUI(true, false);
@@ -642,21 +691,55 @@ toggleLong.addEventListener("change", () => {
   sendMsg({ action: "setOptions", readLongTweets: toggleLong.checked });
 });
 
-filterInput.addEventListener("input", () => {
-  clearTimeout(filterTimeout);
-  filterTimeout = setTimeout(() => {
-    sendMsg({ action: "setFilter", filter: filterInput.value.trim() });
-  }, 500);
+// Category chip clicks
+categoryGrid.addEventListener("click", (e) => {
+  const chip = e.target.closest(".cat-chip");
+  if (!chip) return;
+  const cat = chip.dataset.cat;
+  if (selectedCategories.has(cat)) {
+    selectedCategories.delete(cat);
+    chip.classList.remove("active");
+  } else {
+    selectedCategories.add(cat);
+    chip.classList.add("active");
+  }
+  chrome.storage.local.set({ selectedCategories: [...selectedCategories] });
+  syncFilter();
+});
+
+// Custom keywords
+customKeywords.addEventListener("input", () => {
+  chrome.storage.local.set({ customKeywords: customKeywords.value });
+  syncFilter();
 });
 
 chrome.runtime.onMessage.addListener((msg) => {
   if (msg.type === "now-reading") {
     nrAuthor.textContent = msg.author || "--";
     nrText.textContent = msg.text || "...";
+    if (msg.tweetsRead !== undefined) {
+      tweetsReadCount.textContent = `${msg.tweetsRead} tweet${msg.tweetsRead === 1 ? "" : "s"} read`;
+    }
+    renderUpcoming(msg.upcoming);
   }
   if (msg.type === "state") {
     updateUI(msg.playing, msg.paused);
   }
 });
+
+function renderUpcoming(upcoming) {
+  if (!upcoming || upcoming.length === 0) {
+    upNext.style.display = "none";
+    return;
+  }
+  upNext.style.display = "block";
+  upNextList.innerHTML = "";
+  for (const t of upcoming) {
+    const item = document.createElement("div");
+    item.className = "up-next-item";
+    item.innerHTML = `<span class="up-author">${t.author}</span> — ${t.text}`;
+    upNextList.appendChild(item);
+  }
+}
 
 init();

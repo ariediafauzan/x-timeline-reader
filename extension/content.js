@@ -17,6 +17,7 @@
     readQuotes: true,
     readLongTweets: false,
     speaking: false,
+    tweetsRead: 0,
   };
 
   const INTROS = [
@@ -124,13 +125,25 @@
   }
 
   function expandShowMore(article) {
-    // Click "Show more" button inside a truncated tweet to reveal full text
-    // X.com uses <button data-testid="tweet-text-show-more-link">
-    const btn = article.querySelector('button[data-testid="tweet-text-show-more-link"]');
+    // Click "Show more" inside a truncated tweet to reveal full text
+    // X.com may use <button>, <a>, or <div> with data-testid="tweet-text-show-more-link"
+    const btn = article.querySelector('[data-testid="tweet-text-show-more-link"]');
     if (btn) {
       console.log("[X Reader] Clicking Show more inside tweet");
       btn.click();
       return true;
+    }
+    // Fallback: look for a "Show more" text link inside the tweet text area
+    const tweetText = article.querySelector('div[data-testid="tweetText"]');
+    if (tweetText) {
+      const spans = tweetText.querySelectorAll('span');
+      for (const span of spans) {
+        if (span.textContent.trim().toLowerCase() === 'show more') {
+          console.log("[X Reader] Clicking Show more span fallback");
+          span.click();
+          return true;
+        }
+      }
     }
     return false;
   }
@@ -145,7 +158,17 @@
     return count;
   }
 
-  function extractTweets() {
+  async function extractTweets() {
+    // First pass: click all Show more buttons and wait for expansion
+    let expandedAny = false;
+    const allArticles = document.querySelectorAll('article[data-testid="tweet"]');
+    for (const article of allArticles) {
+      if (expandShowMore(article)) expandedAny = true;
+    }
+    if (expandedAny) {
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+
     const articles = document.querySelectorAll('article[data-testid="tweet"]');
     const tweets = [];
 
@@ -167,6 +190,9 @@
 
       let text = textEl.innerText.trim();
       if (!text) continue;
+
+      // Replace URLs with "link shared" so TTS doesn't read them out
+      text = text.replace(/https?:\/\/\S+/g, "link shared");
 
       // Handle quote tweets
       if (isQuoteTweet(article)) {
@@ -320,26 +346,22 @@
     state.speaking = true;
 
     if (state.readQueue.length === 0) {
-      // Expand truncated tweets + click timeline "Show more" buttons
-      const expanded = expandAllShowMore();
+      // Click timeline "Show more" button to load more tweets
       clickShowMore();
-      if (expanded > 0) await new Promise((r) => setTimeout(r, 800));
       await new Promise((r) => setTimeout(r, 1500));
 
-      const newTweets = extractTweets();
+      const newTweets = await extractTweets();
       if (newTweets.length === 0) {
         window.scrollBy({ top: 600, behavior: "smooth" });
         await new Promise((r) => setTimeout(r, 2500));
-        expandAllShowMore();
         clickShowMore();
         await new Promise((r) => setTimeout(r, 1500));
         if (!state.playing || state.paused) { state.speaking = false; return; }
-        const retry = extractTweets();
+        const retry = await extractTweets();
         if (retry.length === 0) {
           window.scrollBy({ top: 600, behavior: "smooth" });
           await new Promise((r) => setTimeout(r, 2500));
-          expandAllShowMore();
-          const last = extractTweets();
+          const last = await extractTweets();
           if (last.length === 0) {
             await speakText("No more tweets right now. Checking again shortly.");
             await new Promise((r) => setTimeout(r, 5000));
@@ -381,8 +403,10 @@
     const intro = pickRandom(INTROS)(tweet.author);
     const fullText = `${intro} ... ${tweet.text}`;
 
+    state.tweetsRead++;
     console.log("[X Reader] Speaking:", tweet.author, "-", tweet.text.slice(0, 60));
-    notifyPopup({ type: "now-reading", author: tweet.author, text: tweet.text });
+    const upcoming = state.readQueue.slice(0, 3).map(t => ({ author: t.author, text: t.text.slice(0, 80) }));
+    notifyPopup({ type: "now-reading", author: tweet.author, text: tweet.text, tweetsRead: state.tweetsRead, upcoming });
 
     await speakText(fullText);
     if (!state.playing || state.paused) { state.speaking = false; return; }
@@ -408,7 +432,7 @@
     state.playing = true;
     state.paused = false;
     state.tweetIndex = 0;
-    state.readQueue = extractTweets();
+    state.readQueue = await extractTweets();
 
     notifyPopup({
       type: "state",
@@ -418,7 +442,7 @@
     });
 
     const filterNote = state.filter
-      ? `Alright, let's check out what people are saying about ${state.filter}.`
+      ? "Alright, filtering your timeline by topic. Let's go."
       : "Let's see what's on your timeline.";
     await speakText(filterNote);
     speakNext();
@@ -460,6 +484,11 @@
     switch (msg.action) {
       case "start":
         startReading(); sendResponse({ ok: true }); break;
+      case "togglePlay":
+        if (!state.playing) startReading();
+        else if (state.paused) startReading();
+        else pauseReading();
+        sendResponse({ ok: true }); break;
       case "pause":
         pauseReading(); sendResponse({ ok: true }); break;
       case "stop":
@@ -470,7 +499,7 @@
         state.rate = msg.rate; sendResponse({ ok: true }); break;
       case "setFilter":
         state.filter = msg.filter;
-        if (state.playing) state.readQueue = extractTweets();
+        if (state.playing) extractTweets().then(t => { state.readQueue = t; });
         sendResponse({ ok: true }); break;
       case "setSpeaker":
         state.speaker = msg.speaker; sendResponse({ ok: true }); break;
@@ -488,6 +517,8 @@
           readQuotes: state.readQuotes,
           readLongTweets: state.readLongTweets,
           queueLength: state.readQueue.length,
+          tweetsRead: state.tweetsRead,
+          upcoming: state.readQueue.slice(0, 3).map(t => ({ author: t.author, text: t.text.slice(0, 80) })),
           engine: state.serverReady ? "qwen" : "browser",
         }); break;
       case "checkServer":

@@ -84,6 +84,27 @@
 
     .hint { font-size: 10px; color: #526471; margin-top: 3px; }
 
+    /* Category chips */
+    .category-grid {
+      display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px;
+    }
+    .cat-chip {
+      font-size: 11px; padding: 4px 10px;
+      border-radius: 14px; cursor: pointer;
+      background: #1e2e3d; border: 1px solid #38444d;
+      color: #8b98a5; transition: all 0.15s;
+      user-select: none; white-space: nowrap;
+    }
+    .cat-chip:hover { border-color: #526471; color: #e7e9ea; }
+    .cat-chip.active { background: #1d3a5c; border-color: #1d9bf0; color: #1d9bf0; }
+    .custom-kw {
+      width: 100%; background: #1e2e3d; color: #e7e9ea;
+      border: 1px solid #38444d; border-radius: 8px;
+      padding: 6px 10px; font-size: 12px; outline: none;
+    }
+    .custom-kw:focus { border-color: #1d9bf0; }
+    .custom-kw::placeholder { color: #526471; }
+
     input[type="range"] {
       width: 100%; padding: 0; height: 6px;
       -webkit-appearance: none; appearance: none;
@@ -328,6 +349,34 @@
     .server-btn.stop { border-color: #67070f; color: #e05555; }
     .server-btn.stop:hover { background: #67070f; color: #fff; }
 
+    /* Up next queue */
+    .up-next {
+      margin-top: 10px;
+    }
+    .up-next-label {
+      font-size: 10px; color: #8b98a5; margin-bottom: 4px;
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .up-next-list {
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .up-next-item {
+      font-size: 11px; color: #526471; line-height: 1.3;
+      padding: 4px 8px; background: #1a2836; border-radius: 6px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .up-next-item .up-author {
+      color: #8b98a5; font-weight: 600;
+    }
+
+    /* Stats bar */
+    .stats-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 10px; color: #526471; margin-top: 10px;
+      padding-top: 8px; border-top: 1px solid #1e2e3d;
+    }
+    .shortcut-hint { font-size: 9px; color: #38444d; }
+
     .not-on-x {
       text-align: center; padding: 20px 10px;
       color: #8b98a5; font-size: 13px; line-height: 1.5;
@@ -362,9 +411,21 @@
     <!-- Player Tab -->
     <div class="tab-content active" id="tab-player">
       <div class="setting">
-        <label for="filterInput">Topic Filter</label>
-        <input type="text" id="filterInput" placeholder="e.g. AI, LLM, startup">
-        <div class="hint">Comma-separated. Leave empty for all.</div>
+        <label>Topic Filter</label>
+        <div class="category-grid" id="categoryGrid">
+          <span class="cat-chip" data-cat="tech">Tech</span>
+          <span class="cat-chip" data-cat="ai">AI / ML</span>
+          <span class="cat-chip" data-cat="crypto">Crypto</span>
+          <span class="cat-chip" data-cat="business">Business</span>
+          <span class="cat-chip" data-cat="politics">Politics</span>
+          <span class="cat-chip" data-cat="science">Science</span>
+          <span class="cat-chip" data-cat="sports">Sports</span>
+          <span class="cat-chip" data-cat="gaming">Gaming</span>
+          <span class="cat-chip" data-cat="entertainment">Entertainment</span>
+          <span class="cat-chip" data-cat="design">Design</span>
+        </div>
+        <input type="text" class="custom-kw" id="customKeywords" placeholder="+ custom keywords (e.g. startup, React)">
+        <div class="hint">Pick categories and/or add your own. Empty = all tweets.</div>
       </div>
 
       <div class="setting" id="speakerSetting">
@@ -403,7 +464,15 @@
         <div class="nr-text" id="nrText">Press Play to start listening</div>
       </div>
 
-      <div class="status" id="status">Ready</div>
+      <div class="up-next" id="upNext" style="display:none;">
+        <div class="up-next-label">UP NEXT</div>
+        <div class="up-next-list" id="upNextList"></div>
+      </div>
+
+      <div class="stats-bar" id="statsBar">
+        <span id="tweetsReadCount">0 tweets read</span>
+        <span class="shortcut-hint">⌘⇧P play · ⌘⇧S skip</span>
+      </div>
     </div>
 
     <!-- Models Tab -->

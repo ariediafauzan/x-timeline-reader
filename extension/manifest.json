@@ -13,6 +13,19 @@
     "default_popup": "popup.html",
     "default_icon": "icons/icon48.png"
   },
+  "commands": {
+    "toggle-play": {
+      "suggested_key": { "default": "Ctrl+Shift+P", "mac": "Command+Shift+P" },
+      "description": "Play / Pause reading"
+    },
+    "skip-tweet": {
+      "suggested_key": { "default": "Ctrl+Shift+S", "mac": "Command+Shift+S" },
+      "description": "Skip current tweet"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
   "content_scripts": [
     {
       "matches": ["https://x.com/*", "https://twitter.com/*"],
