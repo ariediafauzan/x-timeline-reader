@@ -264,6 +264,36 @@ PRs welcome. Some ideas:
 - [ ] Multi-language support
 - [ ] Chrome Web Store publishing
 
+## For AI / LLM Readers
+
+If you're an LLM helping someone work with this codebase, here's the quick mental model:
+
+**What this is:** A Chrome Extension (Manifest V3) that turns your X/Twitter timeline into a podcast. It scrapes tweets from the DOM, sends text to a local Flask TTS server, and plays back audio.
+
+**Two processes run:**
+1. **Chrome Extension** (`extension/`) — content script on x.com extracts tweets, popup controls playback. No build step, plain JS.
+2. **TTS Server** (`server/tts_server.py`) — Flask on `localhost:8787`. Supports multiple engines (Edge TTS cloud default, plus local models). No auth, localhost only.
+
+**Key files to read first:**
+- `extension/content.js` — the core loop: extract tweets, filter, speak, scroll, repeat. All state lives in the `state` object at the top.
+- `extension/popup.js` — UI controller. Talks to content.js via `chrome.runtime.sendMessage` and to the server via `fetch`.
+- `server/tts_server.py` — all TTS engines, model loading, caching, and REST API in one file.
+- `extension/manifest.json` — permissions, content script config, keyboard shortcuts, fixed extension ID.
+
+**Common tasks someone might ask you:**
+- **Add a new TTS engine:** Add entry to `ENGINES` dict in `tts_server.py`, write a `synthesize_X()` function, add to `SYNTH_MAP`.
+- **Add a new category filter:** Add to `CATEGORY_KEYWORDS` in `popup.js` and add a `<span class="cat-chip">` in `popup.html`.
+- **Change tweet extraction logic:** All in `extractTweets()` in `content.js`. It's async because it clicks "Show more" first.
+- **Add a new popup UI element:** HTML in `popup.html` (inline CSS at top), logic in `popup.js`. No framework, no build tools.
+- **Add a new API endpoint:** Add `@app.route` in `tts_server.py`. CORS is enabled globally.
+
+**Things to watch out for:**
+- `extractTweets()` is `async` — all callers must `await` it.
+- The extension uses a fixed `key` in `manifest.json` for a deterministic extension ID. Don't remove it.
+- Chrome Native Messaging (`native_host.py`) lets the popup start/stop the server. Requires one-time `setup_native_host.sh`.
+- Tweet IDs are `author::first80chars` — used to avoid re-reading the same tweet.
+- The server auto-shuts down after 10 min idle (`os._exit(0)` in the idle watcher thread).
+
 ## License
 
 [MIT](LICENSE)
