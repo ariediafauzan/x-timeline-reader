@@ -9,7 +9,7 @@ A Chrome extension that reads your X (Twitter) timeline aloud so you can listen 
 
 ## Why?
 
-Scrolling X is a time sink. This extension turns your timeline into a podcast — you hear tweets read aloud with natural voices while you work, code, or cook. Filter by topic, skip the noise, and never miss what matters.
+You want to stay in the loop with what's happening on your timeline, but you also want to get work done. This extension turns your timeline into a podcast — you hear tweets read aloud with natural voices while you work, code, or cook. Filter by topic, skip the noise, and never miss what matters.
 
 ## Features
 
