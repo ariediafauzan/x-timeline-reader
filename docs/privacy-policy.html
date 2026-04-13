@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy — X Timeline Reader</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0f1419; color: #e7e9ea; padding: 40px 20px;
+      line-height: 1.7; max-width: 720px; margin: 0 auto;
+    }
+    h1 { font-size: 28px; margin-bottom: 8px; }
+    h2 { font-size: 20px; margin-top: 32px; margin-bottom: 12px; color: #1d9bf0; }
+    p, li { font-size: 15px; margin-bottom: 12px; color: #c4ccd2; }
+    ul { padding-left: 24px; }
+    a { color: #1d9bf0; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .updated { font-size: 13px; color: #8b98a5; margin-bottom: 32px; }
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+    th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid #38444d; font-size: 14px; }
+    th { color: #8b98a5; font-weight: 600; }
+    td { color: #c4ccd2; }
+    code { background: #1e2e3d; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <h1>Privacy Policy</h1>
+  <p class="updated">X Timeline Reader &mdash; Last updated: April 13, 2026</p>
+
+  <h2>Overview</h2>
+  <p>X Timeline Reader is a browser extension that reads your X (Twitter) timeline aloud. Your privacy matters. This extension is designed to work without collecting, storing, or transmitting your personal data.</p>
+
+  <h2>What data we collect</h2>
+  <p><strong>None.</strong> We do not collect, store, or transmit any personal data, browsing history, analytics, or usage statistics.</p>
+
+  <h2>How the extension works</h2>
+  <ul>
+    <li>The extension reads tweet content directly from the x.com page you are viewing in your browser.</li>
+    <li>Tweet text is sent to a text-to-speech (TTS) service to generate audio:
+      <ul>
+        <li><strong>Edge TTS (default):</strong> Tweet text is sent to Microsoft's Edge TTS service to generate speech audio. No account information, user identity, or browsing data is sent &mdash; only the tweet text.</li>
+        <li><strong>Local TTS server (optional):</strong> If you run the optional local TTS server, tweet text is processed entirely on your own machine. Nothing is sent to any external service.</li>
+        <li><strong>Browser TTS (fallback):</strong> Uses your browser's built-in SpeechSynthesis API. All processing happens locally.</li>
+      </ul>
+    </li>
+    <li>Your selected categories, custom keywords, and preferences are stored locally on your device using Chrome's <code>storage</code> API. This data never leaves your browser.</li>
+  </ul>
+
+  <h2>Permissions used</h2>
+  <table>
+    <tr><th>Permission</th><th>Why it's needed</th></tr>
+    <tr><td><code>activeTab</code></td><td>To read tweet content from the x.com page you're viewing</td></tr>
+    <tr><td><code>storage</code></td><td>To save your preferences (selected categories, voice, speed) locally</td></tr>
+    <tr><td><code>nativeMessaging</code></td><td>To optionally start/stop the local TTS server from the extension popup</td></tr>
+  </table>
+
+  <h2>Third-party services</h2>
+  <ul>
+    <li><strong>Microsoft Edge TTS:</strong> When using the default Edge TTS engine, tweet text is sent to Microsoft's speech synthesis service. See <a href="https://privacy.microsoft.com/en-us/privacystatement">Microsoft's Privacy Statement</a>.</li>
+    <li><strong>HuggingFace (optional):</strong> If you choose to download local TTS models, model files are downloaded from HuggingFace. See <a href="https://huggingface.co/privacy">HuggingFace's Privacy Policy</a>.</li>
+  </ul>
+
+  <h2>Data retention</h2>
+  <p>We retain no data. All preferences are stored locally in your browser and can be cleared by removing the extension.</p>
+
+  <h2>Children's privacy</h2>
+  <p>This extension is not directed at children under 13 and does not knowingly collect data from children.</p>
+
+  <h2>Changes to this policy</h2>
+  <p>If this policy is updated, the changes will be posted here with an updated date.</p>
+
+  <h2>Contact</h2>
+  <p>For questions about this privacy policy, open an issue at:<br>
+  <a href="https://github.com/ariediafauzan/x-timeline-reader/issues">github.com/ariediafauzan/x-timeline-reader/issues</a></p>
+
+  <h2>Open source</h2>
+  <p>This extension is fully open source. Review all code at:<br>
+  <a href="https://github.com/ariediafauzan/x-timeline-reader">github.com/ariediafauzan/x-timeline-reader</a></p>
+</body>
+</html>
