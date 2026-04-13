@@ -262,7 +262,7 @@ PRs welcome. Some ideas:
 - [ ] Bookmark/save interesting tweets while listening
 - [ ] Read Twitter Spaces transcripts
 - [ ] Multi-language support
-- [ ] Chrome Web Store publishing
+- [ ] Playlist / save queue for later
 
 ## For AI / LLM Readers
 
