@@ -284,7 +284,6 @@ def _download_and_load_hf(model_id):
         hf_pipeline = hf_pipe(
             "text-to-speech", model=model_id,
             device="mps", torch_dtype=torch.float32,
-            trust_remote_code=True,
         )
         hf_model_id = model_id
         current_engine_id = "_hf_pipeline"
@@ -409,7 +408,6 @@ def load_hf_pipeline(model_id):
         model=model_id,
         device="mps",
         torch_dtype=torch.float32,
-        trust_remote_code=True,
     )
     hf_model_id = model_id
     print(f"[TTS] HF model loaded: {model_id}")

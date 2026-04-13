@@ -6,3 +6,8 @@ __pycache__/
 .DS_Store
 /tmp/
 *.log
+.env
+.env.*
+.env.local
+.gstack/
+.claude/
