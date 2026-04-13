@@ -4,6 +4,38 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.2.0] - 2026-04-13
+
+### Added
+- Category-based topic filter — 10 preset categories (Tech, AI/ML, Crypto, Business, Politics, Science, Sports, Gaming, Entertainment, Design) with clickable chips
+- Custom keywords input alongside category chips
+- Keyboard shortcuts — Cmd+Shift+P play/pause, Cmd+Shift+S skip (Ctrl on Windows/Linux)
+- Background service worker for handling keyboard shortcuts
+- Queue preview — "Up Next" section showing the next 3 tweets
+- Read stats counter — tracks tweets read per session
+- Shortcut hints in the stats bar
+
+### Changed
+- URLs in tweets now read as "link shared" instead of the full URL
+- Show more detection improved with fallback span selector
+- Tweet extraction is now async — expands truncated tweets before reading
+- Filter intro message simplified for category-based filtering
+- Category selections persist via chrome.storage.local
+
+## [1.1.0] - 2026-04-12
+
+### Added
+- Pocket TTS engine — lightweight CPU-only TTS from Kyutai Labs (100M params, ~6x realtime)
+- Server Start/Stop button in popup via Chrome Native Messaging
+- Fixed extension ID via manifest.json key field (deterministic across installs)
+- Cross-platform native host setup (macOS, Linux, Chromium)
+- Acknowledgments section in README
+
+### Changed
+- Engines reordered fastest-first (Edge TTS, Pocket TTS, then local models)
+- Show more button selector fixed to match X.com's actual DOM
+- setup_native_host.sh no longer prompts for extension ID
+
 ## [1.0.0] - 2026-04-11
 
 ### Added

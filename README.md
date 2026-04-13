@@ -14,7 +14,7 @@ Scrolling X is a time sink. This extension turns your timeline into a podcast �
 ## Features
 
 - **Podcast-style reading** — natural intros, transitions, and personality between tweets
-- **Topic filtering** — only read tweets matching your keywords (e.g. `AI, startup, tech`)
+- **Category filters** — tap preset categories (Tech, AI/ML, Crypto, Business, Sports, etc.) or add custom keywords
 - **Smart skipping** — automatically skips ads, promoted posts, paid partnerships, and video tweets
 - **Scroll & highlight** — scrolls through your timeline tweet-by-tweet with visual highlight
 - **Multiple TTS engines** — Edge TTS (cloud, default), Pocket TTS, Qwen3 TTS, VoxCPM2, or any HuggingFace model
@@ -22,6 +22,10 @@ Scrolling X is a time sink. This extension turns your timeline into a podcast �
 - **Speed control** — 0.5x to 2.0x playback speed
 - **Toggle options** — choose whether to read quoted retweets and long-form tweets
 - **Auto "Show more"** — clicks expand buttons so it reads full tweet threads
+- **Keyboard shortcuts** — Cmd+Shift+P play/pause, Cmd+Shift+S skip (Ctrl on Windows/Linux)
+- **Queue preview** — see the next 3 tweets coming up in "Up Next"
+- **Read stats** — tracks how many tweets you've listened to per session
+- **Clean URL handling** — says "link shared" instead of reading out full URLs
 - **Server control** — Start/Stop the TTS server from the popup, no terminal needed
 - **Resource-friendly** — auto-unloads models after 5 min idle, server shuts down after 10 min
 - **Download manager** — see cached models, their disk usage, and delete to free space
@@ -60,7 +64,7 @@ This lets you start and stop the TTS server directly from the extension popup �
 1. Go to [x.com](https://x.com/home)
 2. Click the extension icon
 3. Click **Start** to launch the server
-4. (Optional) Enter topic filters
+4. (Optional) Tap category chips or add custom keywords to filter
 5. Hit **Play**
 
 > **Manual start:** If you skip step 3, you can always start the server from Terminal with `./server/start_server.sh`
@@ -169,6 +173,7 @@ pip install voxcpm       # VoxCPM2 (OpenBMB) — very realistic voice, needs MPS
 ```
 ├── extension/                  # Chrome extension (load this in chrome://extensions)
 │   ├── manifest.json           #   Extension manifest v3
+│   ├── background.js           #   Service worker (keyboard shortcuts)
 │   ├── content.js              #   Tweet extraction, TTS playback, scrolling
 │   ├── popup.html              #   Popup UI (dark X theme)
 │   ├── popup.js                #   Popup controller (playback, models, downloads)
@@ -190,11 +195,13 @@ pip install voxcpm       # VoxCPM2 (OpenBMB) — very realistic voice, needs MPS
 
 1. **Content script** (`content.js`) runs on x.com, extracts tweets from the DOM via `article[data-testid="tweet"]`, filters out ads/videos/promoted posts, and manages the reading queue.
 
-2. **Popup** (`popup.html` / `popup.js`) provides playback controls, topic filtering, voice selection, speed slider, and a model management UI with trending HuggingFace models.
+2. **Popup** (`popup.html` / `popup.js`) provides playback controls, category filtering, voice selection, speed slider, queue preview, and a model management UI with trending HuggingFace models.
 
-3. **TTS server** (`tts_server.py`) receives text via `POST /speak`, synthesizes speech through the active engine, and returns audio (MP3 or WAV). Supports engine switching, model downloads, and cache management via REST API.
+3. **Background service worker** (`background.js`) handles keyboard shortcuts (Cmd+Shift+P, Cmd+Shift+S) and forwards them to the content script.
 
-4. The content script plays the returned audio, scrolls to the next tweet, highlights it, and repeats.
+4. **TTS server** (`tts_server.py`) receives text via `POST /speak`, synthesizes speech through the active engine, and returns audio (MP3 or WAV). Supports engine switching, model downloads, and cache management via REST API.
+
+5. The content script plays the returned audio, scrolls to the next tweet, highlights it, and repeats.
 
 ### Key technical details
 
